@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
+import { Grid, Box, Card, CardContent, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import { cleanUnderscore, kFormatter, notateNumber, pascalCase, prefix } from '../../utility/helpers';
 import styled from '@emotion/styled';
 import HtmlTooltip from '../Tooltip';
@@ -50,7 +50,10 @@ const Characters = ({ characters = [], account, lastUpdated, trackers }) => {
           classIndex,
           afkTarget,
           afkTime,
-          postOffice
+          postOffice,
+          inventory,
+          inventorySlots,
+          equipment
         } = character;
         const options = Object.entries(trackers || {})?.reduce((result, [trackerName, data]) => {
           const { options, ...rest } = data;
@@ -79,6 +82,9 @@ const Characters = ({ characters = [], account, lastUpdated, trackers }) => {
                 <Typography>{name}</Typography>
                 {isActive() ? <Typography>Active</Typography> : <Timer variant={'caption'} type={'up'} date={afkTime}
                                                                        lastUpdated={lastUpdated}/>}
+              <HtmlTooltip title={<BagInfo character={character}/>}>
+                <Typography fontSize={14}>Bag : {inventory.length}/{inventorySlots}</Typography>
+              </HtmlTooltip>
               </Stack>
               <Stack direction={'row'} alignItems="center" gap={1} style={{ marginLeft: 'auto' }}>
                 <HtmlTooltip title={cleanUnderscore(activity)}>
@@ -91,6 +97,74 @@ const Characters = ({ characters = [], account, lastUpdated, trackers }) => {
                 </HtmlTooltip>
               </Stack>
             </Stack>
+            <Divider sx={{ my: 1 }}/>
+            <Grid container direction={'row'} xs={12} gap={1}>
+              <Grid container direction={'row'} xs={3}>
+                <Grid item>
+                  <Typography fontSize={12}>Equipment</Typography>
+                </Grid>
+                <Grid container border={1}>
+                  {equipment?.map((item, index) => {
+                    return index < 8 ? 
+                      <Grid item xs={6} direction={'column'}>
+                      <IconImg key={item?.rawName + ' ' + index}
+                                    src={`${prefix}data/${item?.rawName}.png`}
+                                    alt=""/>
+                      </Grid>
+                      : null
+                  })}
+                </Grid>
+              </Grid>
+
+              <Grid container direction={'row'} xs={3}>
+                <Grid item >
+                  <Typography fontSize={12}>Specials</Typography>
+                </Grid>
+                <Grid container border={1}>
+                  {equipment?.map((item, index) => {
+                    return index >= 8 ? 
+                      <Grid item xs={6} direction={'column'} >
+                      <IconImg key={item?.rawName + ' ' + index}
+                                    src={`${prefix}data/${item?.rawName}.png`}
+                                    alt=""/>
+                    </Grid>
+                    : null
+                  })}
+                </Grid>
+              </Grid>
+
+              <Grid container direction={'column'} xs={3} spacing={0} >
+                <Grid item justifyContent={'start'}>
+                    <Typography fontSize={12} >Prayers</Typography>
+                  </Grid>
+                <Grid container direction={'row'} xs  border={1}>
+                  {character.activePrayers?.map((prayer) => {
+                    return <Grid item xs={6}>
+                      <IconImg src={`${prefix}data/PrayerSmol${prayer.prayerIndex}.png`}/>
+                    </Grid>
+                  })}
+                    {/* <Grid item xs={6} border={1}>
+                      <IconImg src={`${prefix}data/PrayerSmol1.png`}/>
+                    </Grid>
+                    <Grid item xs={6} border={1}>
+                      <IconImg src={`${prefix}data/PrayerSmol1.png`}/>
+                    </Grid>                    
+                    <Grid item xs={6} border={1}>
+                      <IconImg src={`${prefix}data/PrayerSmol1.png`}/>
+                    </Grid>                    
+                    <Grid item xs={6} border={1}>
+                      <IconImg src={`${prefix}data/PrayerSmol1.png`}/>
+                    </Grid>                    
+                    <Grid item xs={6} border={1}>
+                      <IconImg src={`${prefix}data/PrayerSmol1.png`}/>
+                    </Grid>                    
+                    <Grid item xs={6} border={1}>
+                      <IconImg src={`${prefix}data/PrayerSmol1.png`}/>
+                    </Grid> */}
+                </Grid>
+              </Grid>
+            </Grid>
+
             <Divider sx={{ my: 1 }}/>
             <Stack direction={'row'} gap={1} flexWrap={'wrap'}>
               {trackers?.worship && alerts?.worship?.unendingEnergy ?
@@ -205,6 +279,30 @@ const Characters = ({ characters = [], account, lastUpdated, trackers }) => {
                                 iconPath={`data/${icon}`}/>
                 }
               ) : null}
+
+              {(character.afkType == 'FIGHTING' && (character.selectedCardPreset != 0)) ?
+                 <Alert iconPath={`etc/Card_Preset_1`}
+                  title={`${character.name} is not using a fighting card preset.`}
+                 />
+                : null}
+
+              {(character.afkType == 'FIGHTING' && (character.selectedTalentPreset != 0)) ?
+                 <Alert iconPath={`data/ClassIcons1`}
+                  title={`${character.name} is not using a fighting talent preset.`}
+                 />
+                : null}
+
+              {(character.afkType != 'FIGHTING' && (character.selectedTalentPreset == 0)) ?
+                 <Alert iconPath={`data/ClassIcons1`}
+                  title={`${character.name} is not using a skill talent preset.`}
+                 />
+                : null}
+
+              {(character.afkType != 'FIGHTING' && (character.selectedCardPreset == 0)) ?
+                 <Alert iconPath={`etc/Card_Preset_2`}
+                  title={`${character.name} is not using a skill card preset.`}
+                 />
+                : null}
             </Stack>
           </CardContent>
         </Card>
@@ -265,6 +363,16 @@ const CharacterInfo = ({ account, characters, character, lastUpdated }) => {
       `${notateNumber(crystalSpawnChance?.value * 100, 'MultiplierInfo')?.replace('.00', '')}%`
       : `1 in ${Math.floor(1 / crystalSpawnChance?.value)}`}/>
     <TitleAndValue title={'Non consume chance'} value={`${kFormatter(nonConsumeChance, 2)}%`}/>
+  </Stack>
+}
+
+const BagInfo = ({character}) => {
+  const {
+    inventory,
+    inventorySlots
+  } = character;
+  return <Stack>
+    <Typography>Bag info goes here</Typography>
   </Stack>
 }
 
